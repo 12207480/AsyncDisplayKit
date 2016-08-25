@@ -13,6 +13,13 @@
 #import <OCMock/OCMock.h>
 
 #import <AsyncDisplayKit/ASTextNode.h>
+#import <AsyncDisplayKit/ASDisplayNode+Beta.h>
+#import <AsyncDisplayKit/ASTextKitContext.h>
+#import <AsyncDisplayKit/ASTextKitTailTruncater.h>
+#import <AsyncDisplayKit/ASTextKitShadower.h>
+#import <AsyncDisplayKit/ASTextKitRenderer.h>
+
+#import <RSSwizzle/RSSwizzle.h>
 
 #import <XCTest/XCTest.h>
 
@@ -226,6 +233,53 @@ static BOOL CGSizeEqualToSizeWithIn(CGSize size1, CGSize size2, CGFloat delta)
   CGSize sizeWithExclusionPaths = [_textNode measure:constrainedSize];
 
   XCTAssertGreaterThan(sizeWithExclusionPaths.height, sizeWithoutExclusionPaths.height, @"Setting exclusions paths should invalidate the calculated size and return a greater size");
+}
+
+- (void)testThatOnlyOneContextIsGeneratedBetweenMeasureAndRender
+{
+  __block NSInteger contextCount = 0;
+  RSSwizzleClassMethod(ASTextKitContext, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
+  {
+    contextCount++;
+    return RSSWCallOriginal();
+  }));
+  __block NSInteger truncaterCount = 0;
+  RSSwizzleClassMethod(ASTextKitTailTruncater, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
+                                                                                                                {
+                                                                                                                  truncaterCount++;
+                                                                                                                  return RSSWCallOriginal();
+                                                                                                                }));
+  __block NSInteger rendererCount = 0;
+  RSSwizzleClassMethod(ASTextKitRenderer, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
+                                                                                                                      {
+                                                                                                                        rendererCount++;
+                                                                                                                        return RSSWCallOriginal();
+                                                                                                                      }));
+  __block NSInteger shadowerCount = 0;
+  RSSwizzleClassMethod(ASTextKitShadower, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
+                                                                                                                 {
+                                                                                                                   shadowerCount++;
+                                                                                                                   return RSSWCallOriginal();
+                                                                                                                 }));
+  __block NSInteger textStorageCount = 0;
+  RSSwizzleClassMethod(NSTextStorage, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
+                                                                                                                 {
+                                                                                                                   textStorageCount++;
+                                                                                                                   return RSSWCallOriginal();
+                                                                                                                 }));
+  
+  ASTextNode *node = [[ASTextNode alloc] init];
+  node.attributedText = [[NSAttributedString alloc] initWithString:@"Hello World"];
+  node.bounds = (CGRect){ .size = [node measure:CGSizeMake(100, 100)] };
+  XCTAssertEqual(contextCount, 1);
+  
+  [node recursivelyEnsureDisplaySynchronously:YES];
+  XCTAssertNotNil(node.contents);
+  XCTAssertEqual(contextCount, 1);
+  XCTAssertEqual(truncaterCount, 1);
+  XCTAssertEqual(rendererCount, 1);
+  XCTAssertEqual(shadowerCount, 1);
+  XCTAssertEqual(textStorageCount, 1);
 }
 
 @end
