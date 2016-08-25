@@ -245,28 +245,28 @@ static BOOL CGSizeEqualToSizeWithIn(CGSize size1, CGSize size2, CGFloat delta)
   }));
   __block NSInteger truncaterCount = 0;
   RSSwizzleClassMethod(ASTextKitTailTruncater, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
-                                                                                                                {
-                                                                                                                  truncaterCount++;
-                                                                                                                  return RSSWCallOriginal();
-                                                                                                                }));
+  {
+    truncaterCount++;
+    return RSSWCallOriginal();
+  }));
   __block NSInteger rendererCount = 0;
   RSSwizzleClassMethod(ASTextKitRenderer, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
-                                                                                                                      {
-                                                                                                                        rendererCount++;
-                                                                                                                        return RSSWCallOriginal();
-                                                                                                                      }));
+  {
+    rendererCount++;
+    return RSSWCallOriginal();
+  }));
   __block NSInteger shadowerCount = 0;
   RSSwizzleClassMethod(ASTextKitShadower, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
-                                                                                                                 {
-                                                                                                                   shadowerCount++;
-                                                                                                                   return RSSWCallOriginal();
-                                                                                                                 }));
+  {
+    shadowerCount++;
+    return RSSWCallOriginal();
+  }));
   __block NSInteger textStorageCount = 0;
   RSSwizzleClassMethod(NSTextStorage, @selector(alloc), RSSWReturnType(id), RSSWArguments(), RSSWReplacement(
-                                                                                                                 {
-                                                                                                                   textStorageCount++;
-                                                                                                                   return RSSWCallOriginal();
-                                                                                                                 }));
+  {
+    textStorageCount++;
+    return RSSWCallOriginal();
+  }));
   
   ASTextNode *node = [[ASTextNode alloc] init];
   node.attributedText = [[NSAttributedString alloc] initWithString:@"Hello World"];
